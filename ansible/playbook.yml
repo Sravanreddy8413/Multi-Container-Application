@@ -1,0 +1,42 @@
+---
+- name: Configure Todo API Server
+  hosts: todo_server
+  become: true
+
+  tasks:
+    - name: Update DNF/YUM packages
+      dnf:
+        name: "*"
+        state: latest
+
+    - name: Install Docker, Git, and Nginx
+      dnf:
+        name:
+          - docker
+          - git
+          - nginx
+        state: present
+
+    - name: Download Docker Compose standalone binary
+      get_url:
+        url: https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    - name: Ensure docker-compose symlink exists
+      file:
+        src: /usr/local/bin/docker-compose
+        dest: /usr/bin/docker-compose
+        state: link
+
+    - name: Start and enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: true
